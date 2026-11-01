@@ -112,6 +112,12 @@ main{padding-block:24px 48px}
   .chev{grid-column:3;grid-row:1/3}
   .u{white-space:normal}
 }
+.row-admin{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 0 12px 22px;font-size:14px}
+.ibtn{font:inherit;font-family:var(--f-head);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--grey);background:#fff;color:var(--green-text);cursor:pointer;border-radius:0}
+.ibtn:hover{border-color:var(--green-text)}
+.ibtn.del{color:var(--pink)}
+.ibtn.del:hover{border-color:var(--pink)}
+.row-admin .confirm .btn{padding:5px 10px;font-size:14px}
 .empty{padding:40px 16px;text-align:center;color:var(--muted);border:1px dashed var(--grey);margin-top:16px}
 
 /* sterren */
@@ -265,11 +271,6 @@ footer p{margin:0;color:var(--muted)}
   <p class="notice" id="notice" hidden></p>
   <p class="status" id="count" aria-live="polite">Prompts laden…</p>
   <ul id="list"></ul>
-
-  <footer>
-    <h3>Meer inspiratie nodig?</h3>
-    <p>Bekijk ook de <a href="https://aivoordocenten.nl/promptbibliotheek-voor-docenten/" target="_blank" rel="noopener">promptbibliotheek van AI voor Docenten</a>, met tientallen prompts voor lesontwerp, toetsing, feedback en mentoraat.</p>
-  </footer>
 </div>
 </main>
 
@@ -332,7 +333,7 @@ function showNotice(t){const n=$("#notice");n.textContent=t||"";n.hidden=!t}
 const isAdmin=()=>!!state.code;
 const fmtAvg=v=>String(v).replace(".",",");
 
-function renderAdmin(){$("#openAdd").hidden=!isAdmin();$("#openLogin").hidden=isAdmin();$("#adminbar").hidden=!isAdmin()}
+function renderAdmin(){$("#openAdd").hidden=!isAdmin();$("#openLogin").hidden=isAdmin();$("#adminbar").hidden=!isAdmin();state.confirmRow=null;renderList()}
 
 function renderFilters(){
   const f=$("#filters");f.innerHTML="";
@@ -373,6 +374,21 @@ function renderList(){
         <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
       </button>`;
     li.querySelector("button").onclick=()=>openPrompt(p);
+    if(isAdmin()){
+      const ra=document.createElement("div");ra.className="row-admin";
+      if(state.confirmRow===p.id){
+        ra.innerHTML='<span class="confirm">Verwijderen? <button class="btn" type="button">Ja, verwijder</button><button class="btn line" type="button">Nee</button></span>';
+        const [yes,no]=ra.querySelectorAll("button");
+        yes.onclick=async()=>{yes.disabled=true;try{await rpc("pb_delete_prompt",{p_code:state.code,p_id:p.id});state.confirmRow=null;state.prompts=state.prompts.filter(x=>x.id!==p.id);renderFilters();renderList()}catch(err){yes.disabled=false;handleAuthError(err)||showNotice("Verwijderen lukte niet: "+err.message)}};
+        no.onclick=()=>{state.confirmRow=null;renderList()};
+      }else{
+        ra.innerHTML=`<button class="ibtn" type="button" aria-label="Bewerk: ${esc(p.title)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>Bewerken</button><button class="ibtn del" type="button" aria-label="Verwijder: ${esc(p.title)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>Verwijderen</button>`;
+        const [ed,del]=ra.querySelectorAll("button");
+        ed.onclick=()=>openForm(p);
+        del.onclick=()=>{state.confirmRow=p.id;renderList()};
+      }
+      li.appendChild(ra);
+    }
     frag.appendChild(li);
   });
   ul.appendChild(frag);
