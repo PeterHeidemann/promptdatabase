@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Promptbank Onderwijs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#14213a; --muted:#5a6680; --line:#d9dfe9;
+  --accent:#1f4fd1; --mark:#fff1a8; --mark-ink:#5a4600; --danger:#b4232f; --star:#e0a100; --star-off:#cfd6e3;
+  --c-docent:#1f4fd1; --c-ondersteuner:#0f7a6b; --c-student:#b4458c; --c-generiek:#6b5d1a;
+  --c-docent-bg:#e5ecfd; --c-ondersteuner-bg:#ddf2ee; --c-student-bg:#f8e4f0; --c-generiek-bg:#f1edd9;
+  --ok:#0f7a4b;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0e1422; --surface:#161f33; --ink:#e7ecf6; --muted:#9aa6bf; --line:#2a3550;
+  --accent:#8fb0ff; --mark:#4a3f0c; --mark-ink:#ffe68a; --danger:#ff8a93; --star:#ffc531; --star-off:#36415c;
+  --c-docent:#9db8ff; --c-ondersteuner:#6fd6c3; --c-student:#f19ccc; --c-generiek:#ddcc80;
+  --c-docent-bg:#1c2a4f; --c-ondersteuner-bg:#123a35; --c-student-bg:#3d1c32; --c-generiek-bg:#36301a;
+  --ok:#5fd59a; color-scheme:dark}}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+[hidden]{display:none!important}
+.wrap{max-width:880px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 56px}
+header{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:end;justify-content:space-between;margin-bottom:22px}
+.head-text{display:grid;gap:6px;min-width:0;flex:1 1 420px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,6vw,44px);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);margin:4px 0 0;max-width:62ch}
+.lede code{font-family:var(--f-mono);background:var(--mark);color:var(--mark-ink);padding:0 4px;border-radius:3px;font-size:.92em}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.btn{font:inherit;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer;white-space:nowrap}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:var(--surface)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn:focus-visible,.chip:focus-visible,.link:focus-visible,.star:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.panel{background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:18px;display:grid;gap:14px;margin-bottom:20px}
+.panel h2{font-size:20px}
+.row{display:grid;grid-template-columns:1fr 200px;gap:14px}
+.field{display:grid;gap:5px;min-width:0}
+.field label{font-size:13px;font-weight:600}
+.field .hint{font-size:12px;color:var(--muted)}
+.field input,.field select,.field textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%}
+.field textarea{font-family:var(--f-mono);font-size:13px;line-height:1.6;min-height:180px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg{font-size:13px;color:var(--danger)}
+.msg.ok{color:var(--ok)}
+@media (max-width:560px){.row{grid-template-columns:1fr}}
+
+.tools{position:sticky;top:0;z-index:5;background:var(--bg);padding-block:12px;display:grid;gap:10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 12px}
+.search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.search svg{flex:none;color:var(--muted)}
+#q{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;padding:11px 0;outline:none}
+.toolrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:14px;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.chip .n{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--dc,var(--muted))}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip[aria-pressed="true"] .n{color:inherit;opacity:.75}
+.sort{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.sort select{font:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+
+.status{font-size:13px;color:var(--muted);margin:0 0 12px}
+.notice{font-size:13px;padding:10px 12px;border-radius:8px;background:var(--mark);color:var(--mark-ink);margin:0 0 12px}
+.adminbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px;padding:8px 12px;border-radius:8px;background:var(--c-ondersteuner-bg);color:var(--c-ondersteuner);margin:0 0 16px}
+.adminbar strong{margin-right:auto}
+#list{display:grid;gap:12px;list-style:none;margin:0;padding:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;grid-template-columns:1fr auto;gap:10px 16px;align-items:start}
+.card>div{min-width:0}
+.card.fresh{border-color:var(--ok)}
+.meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;font-size:12px;color:var(--muted)}
+.tag{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:4px;color:var(--tc);background:var(--tb)}
+h2{font-family:var(--f-display);font-weight:600;font-size:18px;margin:0;line-height:1.25;text-wrap:balance}
+.use{color:var(--muted);font-size:14px;margin:2px 0 10px}
+pre{font-family:var(--f-mono);font-size:13px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;margin:0;padding:12px 14px;background:var(--bg);border-radius:8px;border:1px solid var(--line);max-height:220px;overflow:auto}
+pre.open{max-height:none}
+.ph{background:var(--mark);color:var(--mark-ink);border-radius:3px;padding:0 3px}
+.foot{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding-top:8px}
+.link{font:inherit;font-size:13px;color:var(--accent);background:none;border:0;padding:0;cursor:pointer}
+.link.del{color:var(--danger)}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.confirm .btn{padding:5px 10px;font-size:13px}
+.copy.done{background:var(--ok);border-color:var(--ok)}
+.empty{padding:40px 16px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+
+.rating{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.stars{display:inline-flex;gap:2px}
+.star{background:none;border:0;padding:2px;cursor:pointer;color:var(--star-off);line-height:0;border-radius:4px}
+.star svg{width:22px;height:22px;fill:currentColor}
+.star.on{color:var(--star)}
+.stars:hover .star{color:var(--star)}
+.stars .star:hover~.star{color:var(--star-off)}
+.score{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.score b{color:var(--ink);font-weight:600}
+.mine{font-size:12px;color:var(--ok)}
+
+[data-cat="docent"]{--tc:var(--c-docent);--tb:var(--c-docent-bg);--dc:var(--c-docent)}
+[data-cat="ondersteuner"]{--tc:var(--c-ondersteuner);--tb:var(--c-ondersteuner-bg);--dc:var(--c-ondersteuner)}
+[data-cat="student"]{--tc:var(--c-student);--tb:var(--c-student-bg);--dc:var(--c-student)}
+[data-cat="generiek"]{--tc:var(--c-generiek);--tb:var(--c-generiek-bg);--dc:var(--c-generiek)}
+@media (max-width:560px){.card{grid-template-columns:1fr}.copy{justify-self:start}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="head-text">
+      <span class="eyebrow">Hoger onderwijs · AI-prompts</span>
+      <h1>Promptbank Onderwijs</h1>
+      <p class="lede">Zoek een prompt, kopieer hem met de knop en vul de <code>[gele velden]</code> in voordat je hem in je AI-tool plakt. Geef een prompt 1 tot 3 sterren als je hem hebt gebruikt.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn" id="openAdd" type="button" hidden>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Prompt toevoegen
+      </button>
+      <button class="btn ghost" id="openLogin" type="button">Beheer</button>
+    </div>
+  </header>
+
+  <form id="loginForm" class="panel" hidden novalidate>
+    <h2>Inloggen als beheerder</h2>
+    <div class="field">
+      <label for="l-code">Wachtwoord</label>
+      <input id="l-code" type="password" autocomplete="current-password">
+    </div>
+    <div class="actions">
+      <button class="btn" type="submit" id="l-go">Inloggen</button>
+      <button class="btn ghost" type="button" id="l-cancel">Annuleren</button>
+      <span class="msg" id="l-msg" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <form id="pwForm" class="panel" hidden novalidate>
+    <h2>Wachtwoord wijzigen</h2>
+    <div class="field">
+      <label for="p-new">Nieuw wachtwoord</label>
+      <span class="hint">Minstens 8 tekens. Geef het alleen aan mensen die prompts mogen beheren.</span>
+      <input id="p-new" type="password" autocomplete="new-password">
+    </div>
+    <div class="actions">
+      <button class="btn" type="submit" id="p-go">Opslaan</button>
+      <button class="btn ghost" type="button" id="p-cancel">Annuleren</button>
+      <span class="msg" id="p-msg" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <form id="addForm" class="panel" hidden novalidate>
+    <h2 id="f-heading">Nieuwe prompt</h2>
+    <div class="row">
+      <div class="field">
+        <label for="f-title">Titel</label>
+        <input id="f-title" maxlength="120" placeholder="Bijv. Peerfeedback structureren">
+      </div>
+      <div class="field">
+        <label for="f-cat">Categorie</label>
+        <select id="f-cat">
+          <option value="docent">Docent</option>
+          <option value="ondersteuner">Ondersteuner</option>
+          <option value="student">Student</option>
+          <option value="generiek">Generiek</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="f-use">Waarvoor gebruik je hem?</label>
+      <input id="f-use" maxlength="200" placeholder="Eén zin, bijv. Studenten gerichte feedback laten geven op elkaars werk.">
+    </div>
+    <div class="field">
+      <label for="f-text">Prompttekst</label>
+      <span class="hint">Zet in te vullen delen tussen vierkante haken, bijv. [onderwerp]. Die worden geel gemarkeerd.</span>
+      <textarea id="f-text" maxlength="8000" placeholder="Je bent een ervaren … Doe het volgende voor [onderwerp]: …"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn" type="submit" id="f-save">Opslaan</button>
+      <button class="btn ghost" type="button" id="f-cancel">Annuleren</button>
+      <span class="msg" id="f-msg" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <div class="adminbar" id="adminbar" hidden>
+    <strong>Je bent ingelogd als beheerder</strong>
+    <button class="link" type="button" id="openPw">Wachtwoord wijzigen</button>
+    <button class="link" type="button" id="logout">Uitloggen</button>
+  </div>
+
+  <div class="tools">
+    <label class="search" for="q">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Zoek op titel, doel of tekst…" autocomplete="off">
+    </label>
+    <div class="toolrow">
+      <div class="filters" id="filters" role="group" aria-label="Filter op categorie"></div>
+      <label class="sort" for="sort">Sorteer
+        <select id="sort">
+          <option value="new">Nieuwste eerst</option>
+          <option value="best">Best beoordeeld</option>
+          <option value="az">Titel A–Z</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <p class="notice" id="notice" hidden></p>
+  <p class="status" id="count" aria-live="polite">Prompts laden…</p>
+  <ul id="list"></ul>
+</div>
+
+<script>
+/* ===== INSTELLINGEN – vul hier je Supabase-gegevens in ===== */
+const SUPABASE_URL = "https://ifpnmfyvvheujyxuqfpm.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmcG5tZnl2dmhldWp5eHVxZnBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMjkyMDQsImV4cCI6MjEwMjgwNTIwNH0.xFEKfL-_iQyIFzhLjGPbx2zDTUMkjjl4LTkdMsjYRS8";
+/* ========================================================== */
+
+const CATS=[{id:"alle",label:"Alle"},{id:"docent",label:"Docent"},{id:"ondersteuner",label:"Ondersteuner"},{id:"student",label:"Student"},{id:"generiek",label:"Generiek"}];
+const catLabel=id=>(CATS.find(c=>c.id===id)||{label:id}).label;
+const $=s=>document.querySelector(s);
+const STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg>';
+
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
+function sess(k,v){try{if(v===undefined)return sessionStorage.getItem(k);if(v===null)sessionStorage.removeItem(k);else sessionStorage.setItem(k,v)}catch(e){return null}}
+function uuid(){if(crypto.randomUUID)return crypto.randomUUID();return"10000000-1000-4000-8000-100000000000".replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16))}
+
+let voter=store("pb-voter"); if(!voter){voter=uuid();store("pb-voter",voter)}
+let myVotes={}; try{myVotes=JSON.parse(store("pb-votes")||"{}")}catch(e){}
+
+const state={cat:store("pb-cat")||"alle",q:"",sort:store("pb-sort")||"new",prompts:[],loaded:false,code:sess("pb-code"),confirmId:null,editId:null,freshId:null};
+if(!CATS.some(c=>c.id===state.cat))state.cat="alle";
+$("#sort").value=state.sort;
+
+async function rpc(fn,args){
+  const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json"},body:JSON.stringify(args||{})});
+  const t=await r.text(); let d=null; try{d=t?JSON.parse(t):null}catch(e){}
+  if(!r.ok){const m=(d&&(d.message||d.hint))||("Fout "+r.status);const err=new Error(m);err.status=r.status;throw err}
+  return d;
+}
+
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function highlight(t){return esc(t).replace(/\[([^\]]+)\]/g,'<span class="ph">[$1]</span>')}
+function showNotice(t){const n=$("#notice");n.textContent=t||"";n.hidden=!t}
+const isAdmin=()=>!!state.code;
+
+function renderAdmin(){
+  $("#openAdd").hidden=!isAdmin();
+  $("#openLogin").hidden=isAdmin();
+  $("#adminbar").hidden=!isAdmin();
+}
+
+function renderFilters(){
+  const f=$("#filters");f.innerHTML="";
+  CATS.forEach(c=>{
+    const n=c.id==="alle"?state.prompts.length:state.prompts.filter(p=>p.cat===c.id).length;
+    const b=document.createElement("button");
+    b.className="chip";b.type="button";if(c.id!=="alle")b.dataset.cat=c.id;
+    b.setAttribute("aria-pressed",state.cat===c.id);
+    b.innerHTML=(c.id!=="alle"?'<span class="dot"></span>':'')+c.label+' <span class="n">'+n+'</span>';
+    b.onclick=()=>{state.cat=c.id;store("pb-cat",c.id);renderFilters();renderList()};
+    f.appendChild(b);
+  });
+}
+
+function sorted(items){
+  const a=items.slice();
+  if(state.sort==="best")a.sort((x,y)=>(Number(y.avg_stars)||0)-(Number(x.avg_stars)||0)||(y.votes-x.votes));
+  else if(state.sort==="az")a.sort((x,y)=>x.title.localeCompare(y.title,"nl"));
+  return a;
+}
+
+function ratingHTML(p){
+  const mine=myVotes[p.id]||0;
+  let s='<div class="rating"><span class="stars" role="group" aria-label="Beoordeel deze prompt">';
+  for(let i=1;i<=3;i++)s+=`<button type="button" class="star${i<=mine?" on":""}" data-v="${i}" aria-label="${i} ster${i>1?"ren":""}" aria-pressed="${i===mine}">${STAR}</button>`;
+  s+='</span>';
+  s+=p.votes?`<span class="score"><b>${String(p.avg_stars).replace(".",",")}</b> van 3 · ${p.votes} stem${p.votes===1?"":"men"}</span>`:'<span class="score">Nog geen beoordeling</span>';
+  if(mine)s+=`<span class="mine">Jouw score: ${mine}</span>`;
+  return s+'</div>';
+}
+
+function renderList(){
+  const ul=$("#list");ul.innerHTML="";
+  if(!state.loaded)return;
+  const q=state.q.trim().toLowerCase();
+  const items=sorted(state.prompts.filter(p=>(state.cat==="alle"||p.cat===state.cat)&&(!q||(p.title+" "+p.use+" "+p.body).toLowerCase().includes(q))));
+  $("#count").textContent=items.length+" prompt"+(items.length===1?"":"s")+(state.cat!=="alle"?" in "+catLabel(state.cat):"")+(q?" voor “"+state.q.trim()+"”":"");
+  if(!state.prompts.length){ul.innerHTML='<li class="empty">Nog geen prompts in de database.</li>';return}
+  if(!items.length){ul.innerHTML='<li class="empty">Geen prompts gevonden. Probeer een ander zoekwoord of kies “Alle”.</li>';return}
+  items.forEach(p=>{
+    const li=document.createElement("li");li.className="card"+(p.id===state.freshId?" fresh":"");li.dataset.cat=p.cat;
+    li.innerHTML=`<div>
+        <div class="meta"><span class="tag">${esc(catLabel(p.cat))}</span></div>
+        <h2>${esc(p.title)}</h2>
+        ${p.use?`<p class="use">${esc(p.use)}</p>`:'<div style="height:8px"></div>'}
+        <pre>${highlight(p.body)}</pre>
+        <div class="foot">${ratingHTML(p)}</div>
+      </div>
+      <button class="btn copy" type="button" aria-label="Kopieer prompt: ${esc(p.title)}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        <span>Kopieer</span>
+      </button>`;
+    const pre=li.querySelector("pre"),foot=li.querySelector(".foot");
+    li.querySelector(".copy").onclick=e=>copy(p.body,e.currentTarget,pre);
+    li.querySelectorAll(".star").forEach(b=>b.onclick=()=>rate(p,Number(b.dataset.v),li));
+    ul.appendChild(li);
+    if(pre.scrollHeight>pre.clientHeight+4){
+      const m=document.createElement("button");m.className="link";m.type="button";m.textContent="Toon hele prompt";
+      m.onclick=()=>{const o=pre.classList.toggle("open");m.textContent=o?"Inklappen":"Toon hele prompt"};
+      foot.prepend(m);
+    }
+    if(isAdmin()){
+      const e=document.createElement("button");e.className="link";e.type="button";e.textContent="Bewerken";
+      e.onclick=()=>openForm(p);foot.appendChild(e);
+      if(state.confirmId===p.id){
+        const c=document.createElement("span");c.className="confirm";
+        c.innerHTML='Deze prompt en de beoordelingen verwijderen? <button class="btn danger" type="button">Verwijder</button><button class="btn ghost" type="button">Nee</button>';
+        const [yes,no]=c.querySelectorAll("button");
+        yes.onclick=async()=>{yes.disabled=true;try{await rpc("pb_delete_prompt",{p_code:state.code,p_id:p.id});state.confirmId=null;state.prompts=state.prompts.filter(x=>x.id!==p.id);renderFilters();renderList()}catch(err){yes.disabled=false;handleAuthError(err)||showNotice("Verwijderen lukte niet: "+err.message)}};
+        no.onclick=()=>{state.confirmId=null;renderList()};
+        foot.appendChild(c);
+      }else{
+        const d=document.createElement("button");d.className="link del";d.type="button";d.textContent="Verwijderen";
+        d.onclick=()=>{state.confirmId=p.id;renderList()};foot.appendChild(d);
+      }
+    }
+  });
+}
+
+async function rate(p,v,li){
+  const prev=myVotes[p.id];
+  myVotes[p.id]=v;store("pb-votes",JSON.stringify(myVotes));
+  try{
+    const r=await rpc("pb_rate",{p_prompt:p.id,p_voter:voter,p_stars:v});
+    const row=Array.isArray(r)?r[0]:r;
+    if(row){p.avg_stars=row.avg_stars;p.votes=row.votes}
+  }catch(err){
+    if(prev)myVotes[p.id]=prev;else delete myVotes[p.id];
+    store("pb-votes",JSON.stringify(myVotes));
+    showNotice("Je beoordeling kon niet worden opgeslagen. Probeer het opnieuw.");
+  }
+  const r=li.querySelector(".rating");if(r){const t=document.createElement("div");t.innerHTML=ratingHTML(p);const n=t.firstElementChild;r.replaceWith(n);n.querySelectorAll(".star").forEach(b=>b.onclick=()=>rate(p,Number(b.dataset.v),li))}
+}
+
+function done(btn){btn.classList.add("done");btn.querySelector("span").textContent="Gekopieerd";clearTimeout(btn._t);btn._t=setTimeout(()=>{btn.classList.remove("done");btn.querySelector("span").textContent="Kopieer"},1800)}
+function copy(text,btn,pre){
+  const fallback=()=>{
+    const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+    let ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();
+    if(ok)done(btn);else{const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);btn.querySelector("span").textContent="Geselecteerd – druk Ctrl+C"}
+  };
+  try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>done(btn),fallback);else fallback()}catch(e){fallback()}
+}
+
+function handleAuthError(err){
+  if(/wachtwoord onjuist/i.test(err.message)){state.code=null;sess("pb-code",null);renderAdmin();renderList();showNotice("Je beheersessie is verlopen of het wachtwoord is gewijzigd. Log opnieuw in.");return true}
+  return false;
+}
+
+/* inloggen */
+const loginForm=$("#loginForm");
+$("#openLogin").onclick=()=>{loginForm.hidden=!loginForm.hidden;if(!loginForm.hidden){$("#l-msg").textContent="";$("#l-code").focus()}};
+$("#l-cancel").onclick=()=>{loginForm.hidden=true;loginForm.reset()};
+loginForm.addEventListener("submit",async e=>{
+  e.preventDefault();const code=$("#l-code").value;if(!code){$("#l-msg").textContent="Vul het wachtwoord in.";return}
+  const b=$("#l-go");b.disabled=true;$("#l-msg").textContent="Controleren…";
+  try{
+    const ok=await rpc("pb_check_code",{p_code:code});
+    if(ok===true){state.code=code;sess("pb-code",code);loginForm.hidden=true;loginForm.reset();showNotice("");renderAdmin();renderList()}
+    else $("#l-msg").textContent="Dit wachtwoord klopt niet.";
+  }catch(err){$("#l-msg").textContent="Inloggen lukte niet: "+err.message}
+  finally{b.disabled=false}
+});
+$("#logout").onclick=()=>{state.code=null;sess("pb-code",null);closeForm();$("#pwForm").hidden=true;renderAdmin();renderList()};
+
+/* wachtwoord wijzigen */
+const pwForm=$("#pwForm");
+$("#openPw").onclick=()=>{pwForm.hidden=!pwForm.hidden;$("#p-msg").textContent="";$("#p-msg").className="msg";if(!pwForm.hidden)$("#p-new").focus()};
+$("#p-cancel").onclick=()=>{pwForm.hidden=true;pwForm.reset()};
+pwForm.addEventListener("submit",async e=>{
+  e.preventDefault();const n=$("#p-new").value;const m=$("#p-msg");m.className="msg";
+  if(n.length<8){m.textContent="Gebruik minstens 8 tekens.";return}
+  const b=$("#p-go");b.disabled=true;
+  try{await rpc("pb_change_code",{p_code:state.code,p_new:n});state.code=n;sess("pb-code",n);pwForm.reset();m.className="msg ok";m.textContent="Wachtwoord gewijzigd.";setTimeout(()=>{pwForm.hidden=true},1500)}
+  catch(err){handleAuthError(err)||(m.textContent="Wijzigen lukte niet: "+err.message)}
+  finally{b.disabled=false}
+});
+
+/* toevoegen / bewerken */
+const form=$("#addForm");
+function openForm(p){
+  form.hidden=false;$("#f-msg").textContent="";state.editId=p?p.id:null;
+  $("#f-heading").textContent=p?"Prompt bewerken":"Nieuwe prompt";
+  $("#f-title").value=p?p.title:"";$("#f-use").value=p?p.use:"";$("#f-text").value=p?p.body:"";
+  $("#f-cat").value=p?p.cat:(state.cat!=="alle"?state.cat:"docent");
+  form.scrollIntoView({behavior:"smooth",block:"start"});$("#f-title").focus({preventScroll:true});
+}
+function closeForm(){form.hidden=true;form.reset();state.editId=null;$("#f-msg").textContent=""}
+$("#openAdd").onclick=()=>form.hidden||state.editId?openForm(null):closeForm();
+$("#f-cancel").onclick=closeForm;
+form.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const title=$("#f-title").value.trim(),body=$("#f-text").value.trim(),use=$("#f-use").value.trim(),cat=$("#f-cat").value;
+  if(!title){$("#f-msg").textContent="Geef de prompt een titel.";$("#f-title").focus();return}
+  if(body.length<10){$("#f-msg").textContent="Vul de prompttekst in (minstens 10 tekens).";$("#f-text").focus();return}
+  const save=$("#f-save");save.disabled=true;$("#f-msg").textContent="";
+  try{
+    if(state.editId){await rpc("pb_update_prompt",{p_code:state.code,p_id:state.editId,p_cat:cat,p_title:title,p_use:use,p_body:body});state.freshId=state.editId}
+    else{const id=await rpc("pb_add_prompt",{p_code:state.code,p_cat:cat,p_title:title,p_use:use,p_body:body});state.freshId=id;state.cat=cat;store("pb-cat",cat);state.sort="new";$("#sort").value="new"}
+    state.q="";$("#q").value="";closeForm();await load();window.scrollTo({top:0,behavior:"smooth"});
+  }catch(err){handleAuthError(err)||($("#f-msg").textContent="Opslaan lukte niet: "+err.message)}
+  finally{save.disabled=false}
+});
+
+$("#q").addEventListener("input",e=>{state.q=e.target.value;renderList()});
+$("#sort").addEventListener("change",e=>{state.sort=e.target.value;store("pb-sort",state.sort);renderList()});
+
+async function load(){
+  try{
+    const rows=await rpc("pb_list",{});
+    state.prompts=(rows||[]).map(r=>({...r,use:r.use||""}));state.loaded=true;showNotice("");
+  }catch(err){
+    $("#count").textContent="";
+    showNotice("De prompts konden niet worden geladen. Controleer je internetverbinding en probeer het later opnieuw.");
+    console.error(err);
+  }
+  renderFilters();renderList();
+}
+
+renderAdmin();renderFilters();
+if(SUPABASE_ANON_KEY.startsWith("PLAK")){$("#count").textContent="";showNotice("De app is nog niet gekoppeld aan de database. Vul SUPABASE_ANON_KEY in bovenaan het script in index.html.")}
+else load();
+</script>
+</body>
+</html>
