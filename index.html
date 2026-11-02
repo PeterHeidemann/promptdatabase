@@ -75,9 +75,16 @@ main{padding-block:24px 48px}
 .search:focus-within{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}
 .search svg{flex:none;color:var(--muted)}
 #q{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;padding:11px 0;outline:none}
-.toolrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-.filters{display:flex;flex-wrap:wrap;gap:6px}
+.toolrow{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between}
+.filters{display:grid;gap:8px}
 .chip{font:inherit;font-family:var(--f-head);font-size:15px;font-weight:600;border:1px solid var(--grey);background:#fff;color:var(--ink);padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;border-radius:0}
+.frow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.flabel{font-family:var(--f-head);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);min-width:52px}
+.chip.th[aria-pressed="true"]{background:var(--green);border-color:var(--green)}
+.themes-line{display:block;font-size:13px;color:var(--green-text);font-weight:600;margin-top:3px}
+.checks{display:flex;flex-wrap:wrap;gap:8px 18px}
+.checks label{display:inline-flex;align-items:center;gap:6px;font-weight:400;font-size:15px;cursor:pointer}
+.checks input{width:18px;height:18px;accent-color:var(--green);margin:0}
 .chip .n{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .chip .sq{width:10px;height:10px;background:var(--cc,var(--grey))}
 .chip:hover{border-color:var(--ink)}
@@ -229,6 +236,10 @@ footer p{margin:0;color:var(--muted)}
         </select>
       </div>
     </div>
+    <fieldset class="field" style="border:0;padding:0;margin:0">
+      <legend style="font-size:14px;font-weight:700;padding:0;margin-bottom:5px">Thema's</legend>
+      <div class="checks" id="f-themes"></div>
+    </fieldset>
     <div class="field">
       <label for="f-use">Waarvoor gebruik je hem?</label>
       <input id="f-use" maxlength="200" placeholder="Eén zin, bijv. Studenten gerichte feedback laten geven op elkaars werk.">
@@ -257,7 +268,7 @@ footer p{margin:0;color:var(--muted)}
       <input id="q" type="search" placeholder="Zoek op titel, doel of tekst…" autocomplete="off">
     </label>
     <div class="toolrow">
-      <div class="filters" id="filters" role="group" aria-label="Filter op categorie"></div>
+      <div class="filters"><div class="frow" id="filters" role="group" aria-label="Filter op rol"></div><div class="frow" id="tfilters" role="group" aria-label="Filter op thema"></div></div>
       <label class="sort" for="sort">Sorteer
         <select id="sort">
           <option value="new">Nieuwste eerst</option>
@@ -286,6 +297,7 @@ footer p{margin:0;color:var(--muted)}
       </button>
     </div>
     <p class="use" id="d-use"></p>
+    <span class="themes-line" id="d-themes"></span>
     <pre id="d-body"></pre>
     <div class="dlg-actions">
       <div id="d-rating"></div>
@@ -305,6 +317,9 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 /* ======================== */
 
 const CATS=[{id:"alle",label:"Alle"},{id:"docent",label:"Docent"},{id:"ondersteuner",label:"Ondersteuner"},{id:"student",label:"Student"},{id:"generiek",label:"Generiek"}];
+const THEMES=[{id:"alle",label:"Alle"},{id:"toetsing",label:"Toetsing"},{id:"curriculum",label:"Curriculumontwikkeling"},{id:"didactiek",label:"Didactiek"},{id:"feedback",label:"Feedback"},{id:"onderwijsontwikkeling",label:"Onderwijs ontwikkelen"}];
+const themeLabel=id=>(THEMES.find(t=>t.id===id)||{label:id}).label;
+const themesText=a=>(a||[]).map(themeLabel).join(" · ");
 const catLabel=id=>(CATS.find(c=>c.id===id)||{label:id}).label;
 const $=s=>document.querySelector(s);
 const STAR_PATH='<path class="star-shape" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/>';
@@ -317,8 +332,10 @@ function uuid(){if(crypto.randomUUID)return crypto.randomUUID();return"10000000-
 let voter=store("pb-voter");if(!voter){voter=uuid();store("pb-voter",voter)}
 let myVotes={};try{myVotes=JSON.parse(store("pb-votes")||"{}")}catch(e){}
 
-const state={cat:store("pb-cat")||"alle",q:"",sort:store("pb-sort")||"new",prompts:[],loaded:false,code:sess("pb-code"),current:null,confirm:false,editId:null,freshId:null};
+const state={theme:store("pb-theme")||"alle",cat:store("pb-cat")||"alle",q:"",sort:store("pb-sort")||"new",prompts:[],loaded:false,code:sess("pb-code"),current:null,confirm:false,editId:null,freshId:null};
 if(!CATS.some(c=>c.id===state.cat))state.cat="alle";
+if(!THEMES.some(t=>t.id===state.theme))state.theme="alle";
+$("#f-themes").innerHTML=THEMES.slice(1).map(t=>`<label><input type="checkbox" value="${t.id}" id="ft-${t.id}">${t.label}</label>`).join("");
 $("#sort").value=state.sort;
 
 async function rpc(fn,args){
@@ -336,9 +353,20 @@ const fmtAvg=v=>String(v).replace(".",",");
 function renderAdmin(){$("#openAdd").hidden=!isAdmin();$("#openLogin").hidden=isAdmin();$("#adminbar").hidden=!isAdmin();state.confirmRow=null;renderList()}
 
 function renderFilters(){
-  const f=$("#filters");f.innerHTML="";
+  const tf=$("#tfilters");tf.innerHTML='<span class="flabel">Thema</span>';
+  const byCat=state.prompts.filter(p=>state.cat==="alle"||p.cat===state.cat);
+  THEMES.forEach(t=>{
+    const n=t.id==="alle"?byCat.length:byCat.filter(p=>(p.themes||[]).includes(t.id)).length;
+    const b=document.createElement("button");b.className="chip th";b.type="button";
+    b.setAttribute("aria-pressed",state.theme===t.id);
+    b.innerHTML=t.label+' <span class="n">'+n+'</span>';
+    b.onclick=()=>{state.theme=t.id;store("pb-theme",t.id);renderFilters();renderList()};
+    tf.appendChild(b);
+  });
+  const f=$("#filters");f.innerHTML='<span class="flabel">Rol</span>';
+  const byTheme=state.prompts.filter(p=>state.theme==="alle"||(p.themes||[]).includes(state.theme));
   CATS.forEach(c=>{
-    const n=c.id==="alle"?state.prompts.length:state.prompts.filter(p=>p.cat===c.id).length;
+    const n=c.id==="alle"?byTheme.length:byTheme.filter(p=>p.cat===c.id).length;
     const b=document.createElement("button");b.className="chip";b.type="button";
     if(c.id!=="alle")b.dataset.cat=c.id;
     b.setAttribute("aria-pressed",state.cat===c.id);
@@ -359,17 +387,17 @@ function renderList(){
   const ul=$("#list");ul.innerHTML="";
   if(!state.loaded)return;
   const q=state.q.trim().toLowerCase();
-  const items=sorted(state.prompts.filter(p=>(state.cat==="alle"||p.cat===state.cat)&&(!q||(p.title+" "+p.use+" "+p.body).toLowerCase().includes(q))));
-  $("#count").textContent=items.length+" prompt"+(items.length===1?"":"s")+(state.cat!=="alle"?" in "+catLabel(state.cat):"")+(q?" voor “"+state.q.trim()+"”":"");
+  const items=sorted(state.prompts.filter(p=>(state.cat==="alle"||p.cat===state.cat)&&(state.theme==="alle"||(p.themes||[]).includes(state.theme))&&(!q||(p.title+" "+p.use+" "+p.body).toLowerCase().includes(q))));
+  $("#count").textContent=items.length+" prompt"+(items.length===1?"":"s")+(state.cat!=="alle"?" voor "+catLabel(state.cat).toLowerCase():"")+(state.theme!=="alle"?" · thema "+themeLabel(state.theme):"")+(q?" voor “"+state.q.trim()+"”":"");
   if(!state.prompts.length){ul.innerHTML='<li class="empty">Nog geen prompts in de database.</li>';return}
-  if(!items.length){ul.innerHTML='<li class="empty">Geen prompts gevonden. Probeer een ander zoekwoord of kies “Alle”.</li>';return}
+  if(!items.length){ul.innerHTML='<li class="empty">Geen prompts gevonden. Probeer een ander zoekwoord of zet de filters op “Alle”.</li>';return}
   const frag=document.createDocumentFragment();
   items.forEach(p=>{
     const li=document.createElement("li");li.className="item"+(p.id===state.freshId?" fresh":"");li.dataset.cat=p.cat;
     const score=p.votes?`<span class="mini" title="${p.votes} stem${p.votes===1?"":"men"}">${starSvg(true)}${fmtAvg(p.avg_stars)}</span>`:`<span class="mini">${starSvg(false)}–</span>`;
     li.innerHTML=`<button class="open" type="button">
         <span class="bar" aria-hidden="true"></span>
-        <span class="txt"><span class="t">${esc(p.title)}</span>${p.use?`<span class="u">${esc(p.use)}</span>`:""}</span>
+        <span class="txt"><span class="t">${esc(p.title)}</span>${p.use?`<span class="u">${esc(p.use)}</span>`:""}${(p.themes||[]).length?`<span class="themes-line">${esc(themesText(p.themes))}</span>`:""}</span>
         <span class="side"><span class="lab">${esc(catLabel(p.cat))}</span>${score}</span>
         <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
       </button>`;
@@ -402,6 +430,7 @@ function openPrompt(p){
   $("#d-cat").textContent=catLabel(p.cat);
   $("#d-title").textContent=p.title;
   $("#d-use").textContent=p.use||"";$("#d-use").hidden=!p.use;
+  $("#d-themes").textContent=(p.themes||[]).length?"Thema: "+themesText(p.themes):"";$("#d-themes").hidden=!(p.themes||[]).length;
   $("#d-body").innerHTML=highlight(p.body);
   resetCopy();renderRating();renderDlgAdmin();
   if(!dlg.open){try{dlg.showModal()}catch(e){dlg.setAttribute("open","")}}
@@ -516,6 +545,8 @@ function openForm(p){
   $("#f-heading").textContent=p?"Prompt bewerken":"Nieuwe prompt";
   $("#f-title").value=p?p.title:"";$("#f-use").value=p?p.use:"";$("#f-text").value=p?p.body:"";
   $("#f-cat").value=p?p.cat:(state.cat!=="alle"?state.cat:"docent");
+  const sel=p?(p.themes||[]):(state.theme!=="alle"?[state.theme]:[]);
+  THEMES.slice(1).forEach(t=>{$("#ft-"+t.id).checked=sel.includes(t.id)});
   form.scrollIntoView({behavior:"smooth",block:"start"});$("#f-title").focus({preventScroll:true});
 }
 function closeForm(){form.hidden=true;form.reset();state.editId=null;$("#f-msg").textContent=""}
@@ -523,13 +554,14 @@ $("#openAdd").onclick=()=>form.hidden||state.editId?openForm(null):closeForm();
 $("#f-cancel").onclick=closeForm;
 form.addEventListener("submit",async e=>{
   e.preventDefault();
+  const themes=THEMES.slice(1).map(t=>t.id).filter(id=>$("#ft-"+id).checked);
   const title=$("#f-title").value.trim(),body=$("#f-text").value.trim(),use=$("#f-use").value.trim(),cat=$("#f-cat").value;
   if(!title){$("#f-msg").textContent="Geef de prompt een titel.";$("#f-title").focus();return}
   if(body.length<10){$("#f-msg").textContent="Vul de prompttekst in (minstens 10 tekens).";$("#f-text").focus();return}
   const save=$("#f-save");save.disabled=true;$("#f-msg").textContent="";
   try{
-    if(state.editId){await rpc("pb_update_prompt",{p_code:state.code,p_id:state.editId,p_cat:cat,p_title:title,p_use:use,p_body:body});state.freshId=state.editId}
-    else{const id=await rpc("pb_add_prompt",{p_code:state.code,p_cat:cat,p_title:title,p_use:use,p_body:body});state.freshId=id;state.cat=cat;store("pb-cat",cat);state.sort="new";$("#sort").value="new"}
+    if(state.editId){await rpc("pb_update_prompt",{p_code:state.code,p_id:state.editId,p_cat:cat,p_title:title,p_use:use,p_body:body,p_themes:themes});state.freshId=state.editId}
+    else{const id=await rpc("pb_add_prompt",{p_code:state.code,p_cat:cat,p_title:title,p_use:use,p_body:body,p_themes:themes});state.freshId=id;state.cat=cat;store("pb-cat",cat);state.sort="new";$("#sort").value="new"}
     state.q="";$("#q").value="";closeForm();await load();window.scrollTo({top:0,behavior:"smooth"});
   }catch(err){handleAuthError(err)||($("#f-msg").textContent="Opslaan lukte niet: "+err.message)}
   finally{save.disabled=false}
