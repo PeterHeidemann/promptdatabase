@@ -125,6 +125,22 @@ main{padding-block:24px 48px}
 .ibtn.del{color:var(--pink)}
 .ibtn.del:hover{border-color:var(--pink)}
 .row-admin .confirm .btn{padding:5px 10px;font-size:14px}
+.thanks{padding:14px 16px;background:var(--green-soft);border-left:4px solid var(--green);margin-bottom:24px;display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+.thanks p{margin:0}
+.thanks strong{color:var(--green-text)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.qbtn{font:inherit;font-family:var(--f-head);font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--pink);color:#fff;border:0;cursor:pointer}
+.qbtn.zero{background:var(--grey);color:var(--ink)}
+.qbtn .n{font-variant-numeric:tabular-nums}
+#queue{border:2px solid var(--pink);padding:18px 20px;margin-bottom:24px;display:grid;gap:14px}
+#queue>h2{font-family:var(--f-head);font-size:22px;margin:0}
+#queue>p{margin:0;color:var(--muted);font-size:14px}
+.qitem{border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px}
+.qitem h3{font-family:var(--f-head);font-size:18px;margin:0}
+.qmeta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:13px;color:var(--muted)}
+.qitem pre{max-height:180px;overflow:auto}
+.qactions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.qactions .btn{padding:6px 12px;font-size:14px}
 .empty{padding:40px 16px;text-align:center;color:var(--muted);border:1px dashed var(--grey);margin-top:16px}
 
 /* sterren */
@@ -183,6 +199,10 @@ footer p{margin:0;color:var(--muted)}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         Prompt toevoegen
       </button>
+      <button class="btn yellow" id="openSubmit" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Prompt aanbieden
+      </button>
       <button class="btn on-green" id="openLogin" type="button">Beheer</button>
     </div>
   </div>
@@ -219,8 +239,14 @@ footer p{margin:0;color:var(--muted)}
     </div>
   </form>
 
+  <div class="thanks" id="thanks" hidden>
+    <p><strong>Bedankt voor je prompt!</strong> De beheerder bekijkt hem. Na goedkeuring verschijnt hij in de promptbank.</p>
+    <button class="link" type="button" id="thanksClose">Sluiten</button>
+  </div>
+
   <form id="addForm" class="panel" hidden novalidate>
     <h2 id="f-heading">Nieuwe prompt</h2>
+    <p class="hint" id="f-intro" hidden style="margin:0;color:var(--muted)">Deel een prompt die voor jou goed werkt. De beheerder bekijkt hem voordat hij zichtbaar wordt voor anderen.</p>
     <div class="row">
       <div class="field">
         <label for="f-title">Titel</label>
@@ -249,6 +275,11 @@ footer p{margin:0;color:var(--muted)}
       <span class="hint">Zet in te vullen delen tussen vierkante haken, bijv. [onderwerp]. Die worden geel gemarkeerd.</span>
       <textarea id="f-text" maxlength="8000" placeholder="Je bent een ervaren … Doe het volgende voor [onderwerp]: …"></textarea>
     </div>
+    <div class="field" id="f-name-wrap" hidden>
+      <label for="f-name">Je naam <span style="font-weight:400;color:var(--muted)">(optioneel, alleen zichtbaar voor de beheerder)</span></label>
+      <input id="f-name" maxlength="80" autocomplete="name">
+    </div>
+    <div class="hp" aria-hidden="true"><label for="f-web">Laat dit veld leeg</label><input id="f-web" tabindex="-1" autocomplete="off"></div>
     <div class="actions">
       <button class="btn" type="submit" id="f-save">Opslaan</button>
       <button class="btn line" type="button" id="f-cancel">Annuleren</button>
@@ -258,9 +289,16 @@ footer p{margin:0;color:var(--muted)}
 
   <div class="adminbar" id="adminbar" hidden>
     <strong>Je bent ingelogd als beheerder</strong>
+    <button class="qbtn zero" type="button" id="openQueue">Ter beoordeling <span class="n" id="qcount">0</span></button>
     <button class="link" type="button" id="openPw">Wachtwoord wijzigen</button>
     <button class="link" type="button" id="logout">Uitloggen</button>
   </div>
+
+  <section id="queue" hidden aria-labelledby="q-head">
+    <h2 id="q-head">Aangeboden prompts</h2>
+    <p>Keur een prompt goed om hem te publiceren, pas hem eerst aan, of wijs hem af.</p>
+    <div id="qlist"></div>
+  </section>
 
   <div class="tools">
     <label class="search" for="q">
@@ -332,7 +370,7 @@ function uuid(){if(crypto.randomUUID)return crypto.randomUUID();return"10000000-
 let voter=store("pb-voter");if(!voter){voter=uuid();store("pb-voter",voter)}
 let myVotes={};try{myVotes=JSON.parse(store("pb-votes")||"{}")}catch(e){}
 
-const state={theme:store("pb-theme")||"alle",cat:store("pb-cat")||"alle",q:"",sort:store("pb-sort")||"new",prompts:[],loaded:false,code:sess("pb-code"),current:null,confirm:false,editId:null,freshId:null};
+const state={theme:store("pb-theme")||"alle",cat:store("pb-cat")||"alle",q:"",sort:store("pb-sort")||"new",prompts:[],loaded:false,code:sess("pb-code"),current:null,confirm:false,editId:null,freshId:null,mode:"add",pending:[],qOpen:false,qConfirm:null};
 if(!CATS.some(c=>c.id===state.cat))state.cat="alle";
 if(!THEMES.some(t=>t.id===state.theme))state.theme="alle";
 $("#f-themes").innerHTML=THEMES.slice(1).map(t=>`<label><input type="checkbox" value="${t.id}" id="ft-${t.id}">${t.label}</label>`).join("");
@@ -350,7 +388,49 @@ function showNotice(t){const n=$("#notice");n.textContent=t||"";n.hidden=!t}
 const isAdmin=()=>!!state.code;
 const fmtAvg=v=>String(v).replace(".",",");
 
-function renderAdmin(){$("#openAdd").hidden=!isAdmin();$("#openLogin").hidden=isAdmin();$("#adminbar").hidden=!isAdmin();state.confirmRow=null;renderList()}
+function renderAdmin(){$("#openAdd").hidden=!isAdmin();$("#openSubmit").hidden=isAdmin();$("#openLogin").hidden=isAdmin();$("#adminbar").hidden=!isAdmin();state.confirmRow=null;if(!isAdmin()){state.pending=[];state.qOpen=false}renderQueue();renderList()}
+
+/* wachtrij */
+async function loadPending(){
+  if(!isAdmin())return;
+  try{const rows=await rpc("pb_pending",{p_code:state.code});state.pending=rows||[]}
+  catch(err){if(handleAuthError(err))return;showNotice("De wachtrij kon niet worden geladen: "+err.message)}
+  renderQueue();
+}
+function renderQueue(){
+  const n=state.pending.length,b=$("#openQueue");
+  $("#qcount").textContent=n;b.classList.toggle("zero",!n);
+  b.setAttribute("aria-expanded",state.qOpen);
+  const sec=$("#queue");sec.hidden=!(isAdmin()&&state.qOpen);
+  const list=$("#qlist");list.innerHTML="";
+  if(sec.hidden)return;
+  if(!n){list.innerHTML='<p style="margin:0;color:var(--muted)">Er staan geen prompts klaar om te beoordelen.</p>';return}
+  state.pending.forEach(p=>{
+    const d=document.createElement("div");d.className="qitem";d.dataset.cat=p.cat;
+    const when=new Date(p.created_at).toLocaleDateString("nl-NL",{day:"numeric",month:"short",year:"numeric"});
+    d.innerHTML=`<div class="qmeta"><span class="lab">${esc(catLabel(p.cat))}</span><span>Aangeboden ${when}${p.submitted_by?" door "+esc(p.submitted_by):" (anoniem)"}</span></div>
+      <h3>${esc(p.title)}</h3>
+      ${p.use?`<span class="u" style="white-space:normal">${esc(p.use)}</span>`:""}
+      ${(p.themes||[]).length?`<span class="themes-line">${esc(themesText(p.themes))}</span>`:""}
+      <pre>${highlight(p.body)}</pre>
+      <div class="qactions"></div>`;
+    const a=d.querySelector(".qactions");
+    if(state.qConfirm===p.id){
+      a.innerHTML='<span>Deze aangeboden prompt afwijzen en verwijderen?</span><button class="btn" type="button">Ja, afwijzen</button><button class="btn line" type="button">Nee</button>';
+      const [yes,no]=a.querySelectorAll("button");
+      yes.onclick=async()=>{yes.disabled=true;try{await rpc("pb_delete_prompt",{p_code:state.code,p_id:p.id});state.qConfirm=null;await loadPending()}catch(err){yes.disabled=false;handleAuthError(err)||showNotice("Afwijzen lukte niet: "+err.message)}};
+      no.onclick=()=>{state.qConfirm=null;renderQueue()};
+    }else{
+      a.innerHTML=`<button class="btn" type="button" style="background:var(--green);border-color:var(--green)">Goedkeuren</button><button class="ibtn" type="button">Eerst bewerken</button><button class="ibtn del" type="button">Afwijzen</button>`;
+      const [ok,ed,rej]=a.querySelectorAll("button");
+      ok.onclick=async()=>{ok.disabled=true;try{await rpc("pb_approve",{p_code:state.code,p_id:p.id});state.freshId=p.id;await Promise.all([loadPending(),load()])}catch(err){ok.disabled=false;handleAuthError(err)||showNotice("Goedkeuren lukte niet: "+err.message)}};
+      ed.onclick=()=>openForm(p,"edit-pending");
+      rej.onclick=()=>{state.qConfirm=p.id;renderQueue()};
+    }
+    list.appendChild(d);
+  });
+}
+$("#openQueue").onclick=()=>{state.qOpen=!state.qOpen;renderQueue();if(state.qOpen){loadPending();$("#queue").scrollIntoView({behavior:"smooth",block:"start"})}};
 
 function renderFilters(){
   const tf=$("#tfilters");tf.innerHTML='<span class="flabel">Thema</span>';
@@ -518,7 +598,7 @@ loginForm.addEventListener("submit",async e=>{
   const b=$("#l-go");b.disabled=true;$("#l-msg").textContent="Controleren…";
   try{
     const ok=await rpc("pb_check_code",{p_code:code});
-    if(ok===true){state.code=code;sess("pb-code",code);loginForm.hidden=true;loginForm.reset();showNotice("");renderAdmin()}
+    if(ok===true){state.code=code;sess("pb-code",code);loginForm.hidden=true;loginForm.reset();showNotice("");closeForm();renderAdmin();loadPending()}
     else $("#l-msg").textContent="Dit wachtwoord klopt niet.";
   }catch(err){$("#l-msg").textContent="Inloggen lukte niet: "+err.message}
   finally{b.disabled=false}
@@ -540,17 +620,22 @@ pwForm.addEventListener("submit",async e=>{
 
 /* toevoegen / bewerken */
 const form=$("#addForm");
-function openForm(p){
-  form.hidden=false;$("#f-msg").textContent="";state.editId=p?p.id:null;
-  $("#f-heading").textContent=p?"Prompt bewerken":"Nieuwe prompt";
+function openForm(p,mode){
+  state.mode=mode||(p?"edit":"add");
+  form.hidden=false;$("#thanks").hidden=true;$("#f-msg").textContent="";state.editId=p?p.id:null;
+  $("#f-heading").textContent={add:"Nieuwe prompt",edit:"Prompt bewerken",submit:"Prompt aanbieden","edit-pending":"Aangeboden prompt bewerken"}[state.mode];
+  $("#f-intro").hidden=state.mode!=="submit";$("#f-name-wrap").hidden=state.mode!=="submit";
+  $("#f-save").textContent=state.mode==="submit"?"Versturen":"Opslaan";
   $("#f-title").value=p?p.title:"";$("#f-use").value=p?p.use:"";$("#f-text").value=p?p.body:"";
   $("#f-cat").value=p?p.cat:(state.cat!=="alle"?state.cat:"docent");
   const sel=p?(p.themes||[]):(state.theme!=="alle"?[state.theme]:[]);
   THEMES.slice(1).forEach(t=>{$("#ft-"+t.id).checked=sel.includes(t.id)});
   form.scrollIntoView({behavior:"smooth",block:"start"});$("#f-title").focus({preventScroll:true});
 }
-function closeForm(){form.hidden=true;form.reset();state.editId=null;$("#f-msg").textContent=""}
-$("#openAdd").onclick=()=>form.hidden||state.editId?openForm(null):closeForm();
+function closeForm(){form.hidden=true;form.reset();state.editId=null;state.mode="add";$("#f-msg").textContent=""}
+$("#openAdd").onclick=()=>form.hidden||state.mode!=="add"?openForm(null,"add"):closeForm();
+$("#openSubmit").onclick=()=>form.hidden||state.mode!=="submit"?openForm(null,"submit"):closeForm();
+$("#thanksClose").onclick=()=>{$("#thanks").hidden=true};
 $("#f-cancel").onclick=closeForm;
 form.addEventListener("submit",async e=>{
   e.preventDefault();
@@ -559,6 +644,21 @@ form.addEventListener("submit",async e=>{
   if(!title){$("#f-msg").textContent="Geef de prompt een titel.";$("#f-title").focus();return}
   if(body.length<10){$("#f-msg").textContent="Vul de prompttekst in (minstens 10 tekens).";$("#f-text").focus();return}
   const save=$("#f-save");save.disabled=true;$("#f-msg").textContent="";
+  if(state.mode==="submit"){
+    if($("#f-web").value){closeForm();$("#thanks").hidden=false;save.disabled=false;return}
+    try{
+      await rpc("pb_submit_prompt",{p_cat:cat,p_title:title,p_use:use,p_body:body,p_themes:themes,p_name:$("#f-name").value.trim()});
+      closeForm();$("#thanks").hidden=false;$("#thanks").scrollIntoView({behavior:"smooth",block:"center"});
+    }catch(err){$("#f-msg").textContent="Versturen lukte niet: "+err.message}
+    finally{save.disabled=false}
+    return;
+  }
+  if(state.mode==="edit-pending"){
+    try{await rpc("pb_update_prompt",{p_code:state.code,p_id:state.editId,p_cat:cat,p_title:title,p_use:use,p_body:body,p_themes:themes});closeForm();state.qOpen=true;await loadPending();$("#queue").scrollIntoView({behavior:"smooth",block:"start"})}
+    catch(err){handleAuthError(err)||($("#f-msg").textContent="Opslaan lukte niet: "+err.message)}
+    finally{save.disabled=false}
+    return;
+  }
   try{
     if(state.editId){await rpc("pb_update_prompt",{p_code:state.code,p_id:state.editId,p_cat:cat,p_title:title,p_use:use,p_body:body,p_themes:themes});state.freshId=state.editId}
     else{const id=await rpc("pb_add_prompt",{p_code:state.code,p_cat:cat,p_title:title,p_use:use,p_body:body,p_themes:themes});state.freshId=id;state.cat=cat;store("pb-cat",cat);state.sort="new";$("#sort").value="new"}
@@ -582,7 +682,7 @@ async function load(){
   renderFilters();renderList();
 }
 
-renderAdmin();renderFilters();load();
+renderAdmin();renderFilters();load();loadPending();
 </script>
 </body>
 </html>
